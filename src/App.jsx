@@ -1,12 +1,30 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Clock3, Globe2, Mail, MapPin, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  Briefcase,
+  Clock3,
+  Code2,
+  ExternalLink,
+  Globe2,
+  Mail,
+  Mouse,
+  MousePointerClick,
+  Network,
+  Sun,
+  Triangle,
+  Truck,
+  Users,
+  Zap
+} from "lucide-react";
 
 const DEG = Math.PI / 180;
 const TAU = Math.PI * 2;
 const GLOBE_R = 0.8;
 const MARKER_ELEVATION = 0.035;
 const MAX_THETA = 1.12;
-const INACTIVE_MARKER_COLOR = [0.55, 0.6, 0.66];
+const DEMO_NOW = new Date("2026-05-29T10:56:00Z");
+const CONTACT_EMAIL = "bonddesign85@gmail.com";
 const OFFSET_RE = new RegExp("GMT([+-])([0-9]{1,2})(?::([0-9]{2}))?");
 
 const TIMEZONE_BOUNDARY_SOURCES = [
@@ -36,9 +54,11 @@ const OFFICE_MARKERS = [
     timeZone: "Pacific/Honolulu",
     location: [21.3069, -157.8583],
     size: 0.044,
-    team: "Customer onboarding",
-    workingHours: [8, 16],
-    email: "pacific@example.com"
+    workingHours: [8, 17],
+    email: "pacific@company.com",
+    markerColor: [1, 0.72, 0.16],
+    statusTone: "soon",
+    panelStatus: "Available now"
   },
   {
     id: "los-angeles",
@@ -48,9 +68,10 @@ const OFFICE_MARKERS = [
     timeZone: "America/Los_Angeles",
     location: [34.0522, -118.2437],
     size: 0.045,
-    team: "Sales engineering",
     workingHours: [9, 18],
-    email: "west@example.com"
+    email: "west@company.com",
+    markerColor: [1, 0.72, 0.16],
+    statusTone: "soon"
   },
   {
     id: "new-york",
@@ -60,9 +81,10 @@ const OFFICE_MARKERS = [
     timeZone: "America/New_York",
     location: [40.7128, -74.006],
     size: 0.049,
-    team: "Enterprise sales",
     workingHours: [9, 18],
-    email: "na@example.com"
+    email: "na@company.com",
+    markerColor: [1, 0.72, 0.16],
+    statusTone: "soon"
   },
   {
     id: "london",
@@ -72,9 +94,10 @@ const OFFICE_MARKERS = [
     timeZone: "Europe/London",
     location: [51.5074, -0.1278],
     size: 0.049,
-    team: "Partnerships",
     workingHours: [9, 17],
-    email: "uk@example.com"
+    email: "uk@company.com",
+    markerColor: [0.25, 0.9, 0.58],
+    statusTone: "open"
   },
   {
     id: "kyiv",
@@ -84,9 +107,10 @@ const OFFICE_MARKERS = [
     timeZone: "Europe/Kyiv",
     location: [50.4501, 30.5234],
     size: 0.052,
-    team: "Product delivery",
     workingHours: [10, 19],
-    email: "delivery@example.com"
+    email: "delivery@company.com",
+    markerColor: [0.25, 0.9, 0.58],
+    statusTone: "open"
   },
   {
     id: "dubai",
@@ -96,9 +120,10 @@ const OFFICE_MARKERS = [
     timeZone: "Asia/Dubai",
     location: [25.2048, 55.2708],
     size: 0.049,
-    team: "Regional operations",
     workingHours: [9, 18],
-    email: "mea@example.com"
+    email: "mea@company.com",
+    markerColor: [0.25, 0.9, 0.58],
+    statusTone: "open"
   },
   {
     id: "delhi",
@@ -108,9 +133,10 @@ const OFFICE_MARKERS = [
     timeZone: "Asia/Kolkata",
     location: [28.6139, 77.209],
     size: 0.047,
-    team: "Implementation",
     workingHours: [10, 19],
-    email: "india@example.com"
+    email: "india@company.com",
+    markerColor: [0.25, 0.9, 0.58],
+    statusTone: "open"
   },
   {
     id: "singapore",
@@ -120,9 +146,10 @@ const OFFICE_MARKERS = [
     timeZone: "Asia/Singapore",
     location: [1.3521, 103.8198],
     size: 0.045,
-    team: "APAC support",
     workingHours: [9, 18],
-    email: "apac@example.com"
+    email: "apac@company.com",
+    markerColor: [0.56, 0.62, 0.7],
+    statusTone: "closed"
   },
   {
     id: "tokyo",
@@ -132,9 +159,10 @@ const OFFICE_MARKERS = [
     timeZone: "Asia/Tokyo",
     location: [35.6762, 139.6503],
     size: 0.052,
-    team: "Strategic accounts",
     workingHours: [9, 18],
-    email: "jp@example.com"
+    email: "jp@company.com",
+    markerColor: [0.55, 0.38, 0.96],
+    statusTone: "closed"
   },
   {
     id: "sydney",
@@ -144,10 +172,68 @@ const OFFICE_MARKERS = [
     timeZone: "Australia/Sydney",
     location: [-33.8688, 151.2093],
     size: 0.049,
-    team: "Client success",
     workingHours: [9, 17],
-    email: "anz@example.com"
+    email: "anz@company.com",
+    markerColor: [0.45, 0.78, 1],
+    statusTone: "closed"
   }
+];
+
+const FEATURE_INDICATORS = [
+  { icon: Globe2, tone: "blue", title: "Real-time", detail: "Local Time" },
+  { icon: Sun, tone: "yellow", title: "Timezone", detail: "Boundaries" },
+  { icon: Network, tone: "purple", title: "Office & Team", detail: "Availability" }
+];
+
+const INTERACTION_FEATURES = [
+  { icon: MousePointerClick, tone: "purple", title: "Click any location", detail: "to focus the globe" },
+  { icon: Sun, tone: "blue", title: "See local time", detail: "for each region" },
+  { icon: Clock3, tone: "yellow", title: "Understand team", detail: "availability instantly" },
+  { icon: Zap, tone: "purple", title: "Reduce timezone", detail: "confusion" }
+];
+
+const BUSINESS_CARDS = [
+  {
+    icon: Users,
+    tone: "purple",
+    title: "Improve customer experience",
+    detail: "Help customers know the best time to reach your team."
+  },
+  {
+    icon: Globe2,
+    tone: "blue",
+    title: "Show your global presence",
+    detail: "Visualize your offices and service regions beautifully."
+  },
+  {
+    icon: Clock3,
+    tone: "steel",
+    title: "Reduce timezone friction",
+    detail: "Eliminate back-and-forth emails to find the right meeting time."
+  },
+  {
+    icon: BarChart3,
+    tone: "yellow",
+    title: "Increase trust and engagement",
+    detail: "A modern, interactive experience builds credibility."
+  }
+];
+
+const TECH_CARDS = [
+  { icon: Code2, tone: "cyan", title: "React" },
+  { icon: Zap, tone: "violet", title: "Vite" },
+  { icon: Globe2, tone: "green", title: "COBE", detail: "WebGL Globe" },
+  { icon: Network, tone: "lime", title: "Canvas", detail: "Overlay" },
+  { icon: Clock3, tone: "yellow", title: "Timezone Boundary", detail: "Builder" },
+  { icon: Triangle, tone: "white", title: "Vercel", detail: "Deployment" }
+];
+
+const USE_CASES = [
+  { icon: Briefcase, tone: "purple", title: "SaaS & Software", detail: "Show global teams and support hours" },
+  { icon: Users, tone: "purple", title: "IT & Agencies", detail: "Highlight distributed teams worldwide" },
+  { icon: Truck, tone: "yellow", title: "Logistics & Shipping", detail: "Visualize operations across timezones" },
+  { icon: Users, tone: "yellow", title: "Consulting", detail: "Present global presence to enterprise clients" },
+  { icon: BarChart3, tone: "pink", title: "Startups", detail: "Create a premium first impression" }
 ];
 
 function clamp(value, min, max) {
@@ -174,7 +260,7 @@ function formatOffset(hours) {
   return `UTC${sign}${pad(h)}${m ? `:${pad(m)}` : ""}`;
 }
 
-function getOffsetHours(timeZone, date = new Date()) {
+function getOffsetHours(timeZone, date = DEMO_NOW) {
   try {
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone,
@@ -194,7 +280,7 @@ function getOffsetHours(timeZone, date = new Date()) {
   }
 }
 
-function getLocalDateParts(timeZone, date = new Date()) {
+function getLocalDateParts(timeZone, date = DEMO_NOW) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour: "2-digit",
@@ -210,7 +296,7 @@ function getLocalDateParts(timeZone, date = new Date()) {
   };
 }
 
-function getLocalTime(timeZone, date = new Date()) {
+function getLocalTime(timeZone, date = DEMO_NOW) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour: "2-digit",
@@ -219,40 +305,32 @@ function getLocalTime(timeZone, date = new Date()) {
   }).format(date);
 }
 
-function getAvailability(marker, now = new Date()) {
+function getAvailability(marker, now = DEMO_NOW) {
   const local = getLocalDateParts(marker.timeZone, now);
   const [start, end] = marker.workingHours;
   const isWeekend = local.weekday === "Sat" || local.weekday === "Sun";
-  const isOpen = !isWeekend && local.hour >= start && local.hour < end;
+  const isOpen = marker.statusTone === "open" || (!isWeekend && local.hour >= start && local.hour < end);
 
   if (isOpen) {
     return {
       state: "open",
-      label: "Available now",
+      label: marker.panelStatus || "Available now",
       detail: `Open until ${pad(end)}:00`
     };
   }
 
-  if (isWeekend) {
-    return {
-      state: "closed",
-      label: "Weekend",
-      detail: `Next window ${pad(start)}:00–${pad(end)}:00`
-    };
-  }
-
-  if (local.hour < start) {
+  if (marker.statusTone === "soon" || local.hour < start) {
     return {
       state: "soon",
-      label: "Opening soon",
+      label: marker.panelStatus || "Opening soon",
       detail: `Opens at ${pad(start)}:00`
     };
   }
 
   return {
     state: "closed",
-    label: "After hours",
-    detail: `Next window ${pad(start)}:00–${pad(end)}:00`
+    label: marker.panelStatus || (isWeekend ? "Weekend" : "After hours"),
+    detail: `Next window ${pad(start)}:00-${pad(end)}:00`
   };
 }
 
@@ -270,6 +348,12 @@ function getCenteredRotation(location) {
     phi: Math.atan2(-x, z),
     theta: clamp(Math.atan2(y, horizontal), -MAX_THETA, MAX_THETA)
   };
+}
+
+function createMailto(subject, body = "") {
+  const params = new URLSearchParams({ subject });
+  if (body) params.set("body", body);
+  return `mailto:${CONTACT_EMAIL}?${params.toString()}`;
 }
 
 function projectPoint(lat, lon, phi, theta, size, elevation = 0, frontOnly = true) {
@@ -366,10 +450,6 @@ async function fetchJsonOrZip(source) {
   const response = await fetch(source.url, { cache: "force-cache" });
   if (!response.ok) throw new Error(`${source.label}: ${response.status}`);
 
-  if (source.type === "json") {
-    return response.json();
-  }
-
   const JSZipModule = await import("jszip");
   const JSZip = JSZipModule.default || JSZipModule;
   const zip = await JSZip.loadAsync(await response.arrayBuffer());
@@ -384,20 +464,15 @@ async function fetchJsonOrZip(source) {
 }
 
 async function loadTimezoneBoundaries() {
-  const errors = [];
-
   for (const source of TIMEZONE_BOUNDARY_SOURCES) {
     try {
       const geojson = await fetchJsonOrZip(source);
       const segments = buildTimezoneSegmentsFromGeoJson(geojson);
-      if (!segments.length) throw new Error(`${source.label}: no drawable segments`);
-      return { source: source.label, segments };
-    } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
-    }
+      if (segments.length) return segments;
+    } catch {}
   }
 
-  throw new Error(errors.join(" | "));
+  return buildReferenceSegments();
 }
 
 function buildTimezoneSegmentsFromGeoJson(geojson) {
@@ -499,15 +574,84 @@ function makeSegmentKey(points) {
 }
 
 function getZoneColor(segment) {
-  if (segment.tzid?.startsWith("Etc/")) return "rgba(245, 178, 42, 0.38)";
-  return "rgba(245, 178, 42, 0.55)";
+  if (segment.tzid?.startsWith("Etc/")) return "rgba(245, 178, 42, 0.34)";
+  return "rgba(245, 178, 42, 0.5)";
 }
 
-function StatusBadge({ availability }) {
-  return <span className={`status-badge status-${availability.state}`}>{availability.label}</span>;
+function CustomCursor() {
+  const cursorRef = useRef(null);
+  const dotRef = useRef(null);
+  const positionRef = useRef({ x: 0, y: 0 });
+  const targetRef = useRef({ x: 0, y: 0 });
+  const rafRef = useRef(0);
+  const [visible, setVisible] = useState(false);
+  const [interactive, setInteractive] = useState(false);
+
+  useEffect(() => {
+    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (!canHover) return undefined;
+
+    const move = (event) => {
+      targetRef.current = { x: event.clientX, y: event.clientY };
+      setVisible(true);
+      setInteractive(Boolean(event.target?.closest?.("a, button, input, textarea, select, [role='button'], .globe-wrap")));
+    };
+
+    const leave = () => setVisible(false);
+
+    const animate = () => {
+      const position = positionRef.current;
+      const target = targetRef.current;
+      position.x += (target.x - position.x) * 0.22;
+      position.y += (target.y - position.y) * 0.22;
+
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate3d(${position.x}px, ${position.y}px, 0)`;
+      }
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate3d(${target.x}px, ${target.y}px, 0)`;
+      }
+
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    window.addEventListener("pointermove", move, { passive: true });
+    window.addEventListener("pointerleave", leave);
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerleave", leave);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  return (
+    <>
+      <div ref={cursorRef} className={`custom-cursor ${visible ? "is-visible" : ""} ${interactive ? "is-interactive" : ""}`}>
+        <span />
+      </div>
+      <div ref={dotRef} className={`custom-cursor-dot ${visible ? "is-visible" : ""}`} />
+    </>
+  );
 }
 
-export default function App() {
+function ProductLogo({ compact = false }) {
+  return (
+    <div className={`product-logo ${compact ? "is-compact" : ""}`}>
+      <span className="logo-mark">
+        <Globe2 size={compact ? 18 : 24} />
+      </span>
+      <span>
+        <strong>Global Availability</strong>
+        <em>Globe</em>
+      </span>
+    </div>
+  );
+}
+
+function GlobeScene({ markers, activeMarker, onSelectMarker, variant = "hero" }) {
+  const initialRotation = useMemo(() => getCenteredRotation(activeMarker?.location || markers[0]?.location || [0, 0]), []);
   const wrapRef = useRef(null);
   const globeRef = useRef(null);
   const overlayRef = useRef(null);
@@ -515,44 +659,11 @@ export default function App() {
   const rafRef = useRef(0);
   const rotationRafRef = useRef(0);
   const sizeRef = useRef(720);
-  const phiRef = useRef(-0.55);
-  const thetaRef = useRef(0.02);
+  const phiRef = useRef(initialRotation.phi);
+  const thetaRef = useRef(initialRotation.theta);
   const dragRef = useRef({ active: false, x: 0, y: 0 });
   const zoneSegmentsRef = useRef(buildReferenceSegments());
   const [size, setSize] = useState(720);
-  const [now, setNow] = useState(new Date());
-  const [activeMarkerId, setActiveMarkerId] = useState("kyiv");
-  const [boundaryStatus, setBoundaryStatus] = useState({ state: "loading", text: "Loading timezone-boundary-builder GeoJSON" });
-
-  const markers = useMemo(() => {
-    return OFFICE_MARKERS.map((marker) => {
-      const offset = getOffsetHours(marker.timeZone, now);
-      const availability = getAvailability(marker, now);
-      return {
-        ...marker,
-        offset,
-        availability,
-        localTime: getLocalTime(marker.timeZone, now),
-        label: `${formatOffset(offset)} ${marker.city}`
-      };
-    }).sort((a, b) => {
-      if (a.offset !== b.offset) return a.offset - b.offset;
-      return a.city.localeCompare(b.city);
-    });
-  }, [now]);
-
-  const activeMarker = useMemo(() => {
-    return markers.find((marker) => marker.id === activeMarkerId) || markers[0];
-  }, [activeMarkerId, markers]);
-
-  const coverage = useMemo(() => {
-    const open = markers.filter((marker) => marker.availability.state === "open").length;
-    return {
-      open,
-      total: markers.length,
-      regions: new Set(markers.map((marker) => marker.region)).size
-    };
-  }, [markers]);
 
   const graticule = useMemo(() => {
     const lines = [];
@@ -562,46 +673,26 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 30000);
-    return () => window.clearInterval(timer);
+    let mounted = true;
+    loadTimezoneBoundaries().then((segments) => {
+      if (mounted) zoneSegmentsRef.current = segments;
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!wrapRef.current) return;
+    if (!wrapRef.current) return undefined;
     const observer = new ResizeObserver(([entry]) => {
-      const next = Math.max(360, Math.floor(Math.min(entry.contentRect.width, 820)));
+      const max = variant === "hero" ? 760 : 650;
+      const next = Math.max(320, Math.floor(Math.min(entry.contentRect.width, max)));
       sizeRef.current = next;
       setSize(next);
     });
     observer.observe(wrapRef.current);
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
-    loadTimezoneBoundaries()
-      .then(({ source, segments }) => {
-        if (!mounted) return;
-        zoneSegmentsRef.current = segments;
-        setBoundaryStatus({
-          state: "ready",
-          text: `${source}: ${segments.length.toLocaleString("en-US")} boundary segments`
-        });
-      })
-      .catch((error) => {
-        if (!mounted) return;
-        zoneSegmentsRef.current = buildReferenceSegments();
-        setBoundaryStatus({
-          state: "fallback",
-          text: error instanceof Error ? error.message : "Fallback UTC meridians"
-        });
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     const canvas = globeRef.current;
@@ -626,23 +717,23 @@ export default function App() {
         height: size * dpr,
         phi: phiRef.current,
         theta: thetaRef.current,
-        dark: 0,
-        diffuse: 1.28,
-        mapSamples: 38000,
-        mapBrightness: 4.8,
-        mapBaseBrightness: 0.04,
-        baseColor: [1, 1, 1],
-        markerColor: INACTIVE_MARKER_COLOR,
-        glowColor: [1, 1, 1],
+        dark: 1,
+        diffuse: 1.18,
+        mapSamples: variant === "hero" ? 54000 : 42000,
+        mapBrightness: 6.6,
+        mapBaseBrightness: 0.03,
+        baseColor: [0.02, 0.13, 0.28],
+        markerColor: [1, 0.72, 0.16],
+        glowColor: [0.02, 0.28, 0.62],
         markerElevation: MARKER_ELEVATION,
         opacity: 1,
         scale: 1,
         offset: [0, 0],
         markers: markers.map((marker) => ({
-          id: marker.id,
+          id: `${variant}-${marker.id}`,
           location: marker.location,
           size: marker.size,
-          color: INACTIVE_MARKER_COLOR
+          color: marker.markerColor
         })),
         arcs: [],
         onRender: (state) => {
@@ -670,15 +761,14 @@ export default function App() {
       activeGlobe?.destroy?.();
       if (globeInstanceRef.current === activeGlobe) globeInstanceRef.current = null;
     };
-  }, [size, markers]);
+  }, [size, markers, variant]);
 
   useEffect(() => {
     if (activeMarker) focusMarker(activeMarker, false);
-  }, []);
+  }, [activeMarker?.id]);
 
-  function focusMarker(marker, shouldScroll = true) {
-    setActiveMarkerId(marker.id);
-    if (shouldScroll) wrapRef.current?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+  function focusMarker(marker, notify = true) {
+    if (notify) onSelectMarker?.(marker.id);
     cancelAnimationFrame(rotationRafRef.current);
 
     const target = getCenteredRotation(marker.location);
@@ -687,7 +777,7 @@ export default function App() {
     const deltaPhi = normalizeAngle(target.phi - startPhi);
     const deltaTheta = target.theta - startTheta;
     const start = performance.now();
-    const duration = 850;
+    const duration = 820;
 
     const animate = (timestamp) => {
       const progress = clamp((timestamp - start) / duration, 0, 1);
@@ -730,11 +820,11 @@ export default function App() {
     drawSphereRim(ctx, displaySize);
 
     for (const line of graticule) {
-      drawGeoLine(ctx, line, phiRef.current, thetaRef.current, displaySize, "rgba(81, 174, 232, 0.34)", 0.82);
+      drawGeoLine(ctx, line, phiRef.current, thetaRef.current, displaySize, "rgba(81, 174, 232, 0.28)", 0.78);
     }
 
     for (const segment of zoneSegmentsRef.current) {
-      drawGeoLine(ctx, segment.points, phiRef.current, thetaRef.current, displaySize, getZoneColor(segment), 0.82);
+      drawGeoLine(ctx, segment.points, phiRef.current, thetaRef.current, displaySize, getZoneColor(segment), 0.78);
     }
 
     drawActiveMarkerDot(ctx, displaySize);
@@ -744,16 +834,16 @@ export default function App() {
     const radius = displaySize * 0.407;
     const center = displaySize / 2;
     const rim = ctx.createRadialGradient(center - radius * 0.25, center - radius * 0.25, radius * 0.2, center, center, radius * 1.08);
-    rim.addColorStop(0, "rgba(255, 255, 255, 0)");
-    rim.addColorStop(0.72, "rgba(255, 255, 255, 0)");
-    rim.addColorStop(0.91, "rgba(225, 231, 235, 0.28)");
-    rim.addColorStop(1, "rgba(190, 199, 207, 0.36)");
+    rim.addColorStop(0, "rgba(0, 140, 255, 0)");
+    rim.addColorStop(0.72, "rgba(0, 140, 255, 0)");
+    rim.addColorStop(0.91, "rgba(0, 140, 255, 0.16)");
+    rim.addColorStop(1, "rgba(0, 112, 255, 0.42)");
     ctx.fillStyle = rim;
     ctx.beginPath();
     ctx.arc(center, center, radius * 1.04, 0, TAU);
     ctx.fill();
-    ctx.strokeStyle = "rgba(210, 218, 226, 0.58)";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(90, 169, 255, 0.46)";
+    ctx.lineWidth = 1.1;
     ctx.beginPath();
     ctx.arc(center, center, radius * 1.015, 0, TAU);
     ctx.stroke();
@@ -776,13 +866,13 @@ export default function App() {
     ctx.save();
     ctx.fillStyle = "#ffb829";
     ctx.beginPath();
-    ctx.arc(projected.x, projected.y, 7.5, 0, TAU);
+    ctx.arc(projected.x, projected.y, variant === "hero" ? 8 : 7.5, 0, TAU);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(255, 184, 41, 0.25)";
-    ctx.lineWidth = 11;
+    ctx.strokeStyle = "rgba(255, 184, 41, 0.28)";
+    ctx.lineWidth = variant === "hero" ? 14 : 12;
     ctx.beginPath();
-    ctx.arc(projected.x, projected.y, 7.5, 0, TAU);
+    ctx.arc(projected.x, projected.y, variant === "hero" ? 8 : 7.5, 0, TAU);
     ctx.stroke();
     ctx.restore();
   }
@@ -812,165 +902,347 @@ export default function App() {
     } catch {}
   }
 
-  function resetView() {
-    cancelAnimationFrame(rotationRafRef.current);
-    rotationRafRef.current = 0;
-    focusMarker(markers.find((marker) => marker.id === "kyiv") || markers[0], false);
-  }
+  return (
+    <div
+      ref={wrapRef}
+      className={`globe-wrap globe-wrap-${variant}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+    >
+      <div className="globe-sphere" />
+      <canvas ref={globeRef} className="globe-canvas" />
+      <canvas ref={overlayRef} className="globe-overlay" />
+
+      {activeMarker ? (
+        <div
+          className={`active-tooltip tooltip-${variant}`}
+          style={{
+            positionAnchor: `--cobe-${variant}-${activeMarker.id}`
+          }}
+        >
+          <span>{activeMarker.region}</span>
+          <strong>{activeMarker.city}</strong>
+          <small>
+            {activeMarker.localTime} · {formatOffset(activeMarker.offset)}
+          </small>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function IconBubble({ icon: Icon, tone }) {
+  return (
+    <span className={`icon-bubble tone-${tone}`}>
+      <Icon size={20} />
+    </span>
+  );
+}
+
+export default function App() {
+  const [activeMarkerId, setActiveMarkerId] = useState("honolulu");
+
+  const markers = useMemo(() => {
+    return OFFICE_MARKERS.map((marker) => {
+      const offset = getOffsetHours(marker.timeZone, DEMO_NOW);
+      const availability = getAvailability(marker, DEMO_NOW);
+      return {
+        ...marker,
+        offset,
+        availability,
+        localTime: getLocalTime(marker.timeZone, DEMO_NOW)
+      };
+    }).sort((a, b) => {
+      if (a.offset !== b.offset) return a.offset - b.offset;
+      return a.city.localeCompare(b.city);
+    });
+  }, []);
+
+  const activeMarker = useMemo(() => {
+    return markers.find((marker) => marker.id === activeMarkerId) || markers[0];
+  }, [activeMarkerId, markers]);
+
+  const coverage = useMemo(() => {
+    return {
+      total: markers.length,
+      open: markers.filter((marker) => marker.statusTone === "open").length,
+      regions: markers.length
+    };
+  }, [markers]);
 
   return (
-    <main className="page-shell">
-      <section className="hero-grid">
-        <aside className="hero-copy">
-          <div className="eyebrow">
-            <Sparkles size={16} />
-            Global availability layer
-          </div>
-          <h1>Show customers when and where your global team is available</h1>
+    <main className="site-shell">
+      <CustomCursor />
+      <header className="site-header">
+        <ProductLogo />
+      </header>
+
+      <section className="hero-section" aria-label="Global Availability Globe hero">
+        <div className="hero-copy">
+          <div className="eyebrow">Interactive WebGL Globe</div>
+          <h1>
+            Show customers
+            <br />
+            when and where
+            <br />
+            your <span>global team</span>
+            <br />
+            <span>is available</span>
+          </h1>
           <p className="lead">
-            A commercial WebGL widget for international companies: live office status, local time, timezone boundaries, and clickable regional contact points in one premium interface.
+            An interactive globe that visualizes your offices, timezones, local time and team availability in real-time.
           </p>
 
+          <div className="feature-indicators">
+            {FEATURE_INDICATORS.map((item) => (
+              <div className="mini-feature" key={item.title}>
+                <IconBubble icon={item.icon} tone={item.tone} />
+                <span>
+                  <strong>{item.title}</strong>
+                  <small>{item.detail}</small>
+                </span>
+              </div>
+            ))}
+          </div>
+
           <div className="hero-actions">
-            <a className="primary-action" href={`mailto:${activeMarker.email}`}>
+            <a
+              className="primary-action"
+              href={createMailto(
+                `Global Availability Globe: ${activeMarker.city} region`,
+                `Hi, I want to discuss a Global Availability Globe project inspired by the ${activeMarker.city} region view.`
+              )}
+            >
               Contact active region
               <ArrowRight size={17} />
             </a>
-            <button type="button" className="secondary-action" onClick={resetView}>
-              <RotateCcw size={17} />
-              Reset view
-            </button>
-          </div>
-
-          <div className="stats-grid">
-            <div>
-              <strong>{coverage.total}</strong>
-              <span>Global nodes</span>
-            </div>
-            <div>
-              <strong>{coverage.open}</strong>
-              <span>Available now</span>
-            </div>
-            <div>
-              <strong>{coverage.regions}</strong>
-              <span>Service regions</span>
-            </div>
-          </div>
-        </aside>
-
-        <section className="globe-card">
-          <div
-            ref={wrapRef}
-            className="globe-wrap"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-          >
-            <div className="globe-sphere" />
-            <canvas ref={globeRef} className="globe-canvas" />
-            <canvas ref={overlayRef} className="globe-overlay" />
-
-            {activeMarker ? (
-              <div
-                className="active-tooltip"
-                style={{
-                  positionAnchor: `--cobe-${activeMarker.id}`,
-                  opacity: `var(--cobe-visible-${activeMarker.id}, 0)`,
-                  filter: `blur(calc((1 - var(--cobe-visible-${activeMarker.id}, 0)) * 2px))`
-                }}
-              >
-                <span>{activeMarker.region}</span>
-                <strong>{activeMarker.city}</strong>
-                <small>{activeMarker.localTime} · {formatOffset(activeMarker.offset)}</small>
-              </div>
-            ) : null}
-          </div>
-        </section>
-
-        <aside className="control-panel">
-          <div className="active-office-card">
-            <div className="panel-kicker">
-              <MapPin size={15} />
-              Active region
-            </div>
-            <h2>{activeMarker.city}</h2>
-            <p>{activeMarker.region} · {activeMarker.country}</p>
-
-            <div className="active-meta">
-              <div>
-                <Clock3 size={16} />
-                <span>{activeMarker.localTime}</span>
-              </div>
-              <div>
-                <Globe2 size={16} />
-                <span>{formatOffset(activeMarker.offset)}</span>
-              </div>
-            </div>
-
-            <StatusBadge availability={activeMarker.availability} />
-            <p className="availability-detail">{activeMarker.availability.detail}</p>
-
-            <a className="email-action" href={`mailto:${activeMarker.email}`}>
-              <Mail size={16} />
-              {activeMarker.email}
+            <a className="secondary-action" href="#features">
+              Explore features
             </a>
           </div>
+        </div>
 
-          <div className="boundary-status">
-            <div>
-              <span className={`source-dot source-${boundaryStatus.state}`} />
-              Boundary source
-            </div>
-            <p>{boundaryStatus.text}</p>
+        <div className="hero-visual">
+          <GlobeScene markers={markers} activeMarker={activeMarker} onSelectMarker={setActiveMarkerId} variant="hero" />
+        </div>
+      </section>
+
+      <section className="stats-strip" aria-label="Global statistics">
+        <div className="stat-item">
+          <IconBubble icon={Globe2} tone="blue" />
+          <strong>{coverage.total}</strong>
+          <span>Global nodes</span>
+        </div>
+        <div className="stat-item">
+          <IconBubble icon={Sun} tone="green" />
+          <strong>{coverage.open}</strong>
+          <span>Available now</span>
+        </div>
+        <div className="stat-item">
+          <IconBubble icon={Sun} tone="yellow" />
+          <strong>{coverage.regions}</strong>
+          <span>Service regions</span>
+        </div>
+        <div className="stat-item">
+          <IconBubble icon={Users} tone="purple" />
+          <strong>24/7</strong>
+          <span>Global coverage</span>
+        </div>
+      </section>
+
+      <section className="dashboard-card" aria-label="Interactive dashboard preview">
+        <div className="locations-panel">
+          <div className="panel-title">
+            <strong>Global Availability</strong>
+            <span>
+              <i />
+              Live
+            </span>
           </div>
 
-          <div className="locations-list">
-            <div className="list-head">
-              <span>Timezone nodes</span>
-              <span>Local time</span>
-            </div>
+          <button type="button" className="select-control">
+            Sort by timezone
+            <span>⌄</span>
+          </button>
 
+          <div className="locations-list">
             {markers.map((marker) => (
               <button
                 type="button"
                 key={marker.id}
-                onClick={() => focusMarker(marker)}
+                onClick={() => setActiveMarkerId(marker.id)}
                 className={`location-row ${activeMarkerId === marker.id ? "is-active" : ""}`}
               >
                 <span className="location-main">
-                  <span className={`location-dot ${marker.availability.state}`} />
+                  <span className={`location-dot ${marker.statusTone}`} />
                   <span>
                     <strong>{marker.city}</strong>
-                    <small>{formatOffset(marker.offset)} · {marker.region}</small>
+                    <small>
+                      {formatOffset(marker.offset)} · {marker.region}
+                    </small>
                   </span>
                 </span>
-                <span className="location-time">
-                  {marker.localTime}
-                </span>
+                <span className="location-time">{marker.localTime}</span>
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="dashboard-globe">
+          <GlobeScene markers={markers} activeMarker={activeMarker} onSelectMarker={setActiveMarkerId} variant="demo" />
+          <div className="drag-hint">
+            <Mouse size={20} />
+            Drag to rotate the globe
+          </div>
+        </div>
+
+        <aside className="active-region-card">
+          <div className="section-label">Active region</div>
+          <h2>{activeMarker.city}</h2>
+          <p>{activeMarker.region}</p>
+
+          <div className="active-meta">
+            <div>
+              <Clock3 size={15} />
+              <span>{activeMarker.localTime}</span>
+            </div>
+            <div>
+              <Globe2 size={15} />
+              <span>{formatOffset(activeMarker.offset)}</span>
+            </div>
+          </div>
+
+          <div className="detail-block">
+            <span>Status</span>
+            <strong className="available">● {activeMarker.panelStatus || activeMarker.availability.label}</strong>
+          </div>
+
+          <div className="detail-block">
+            <span>Working hours</span>
+            <p>
+              {pad(activeMarker.workingHours[0])}:00 - {pad(activeMarker.workingHours[1])}:00 (Local time)
+            </p>
+          </div>
+
+          <div className="detail-block contact-block">
+            <span>Contact</span>
+            <a href={createMailto(`Global Availability Globe: contact developer`)}>
+              <Mail size={15} />
+              {CONTACT_EMAIL}
+            </a>
+          </div>
+
+          <a
+            className="region-action"
+            href={createMailto(
+              `Global Availability Globe: ${activeMarker.region}`,
+              `Hi, I want a similar interactive globe experience for my website. Active region: ${activeMarker.city}, ${activeMarker.region}.`
+            )}
+          >
+            Contact this region
+            <ArrowRight size={16} />
+          </a>
         </aside>
+
+        <div className="feature-strip" id="features">
+          {INTERACTION_FEATURES.map((item) => (
+            <div className="strip-item" key={item.title}>
+              <IconBubble icon={item.icon} tone={item.tone} />
+              <span>
+                <strong>{item.title}</strong>
+                <small>{item.detail}</small>
+              </span>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="commercial-strip">
-        <div>
-          <ShieldCheck size={18} />
-          <span>Use case</span>
-          <strong>Global offices, SaaS support, logistics, enterprise teams</strong>
-        </div>
-        <div>
-          <Clock3 size={18} />
-          <span>Business value</span>
-          <strong>Reduces timezone friction before contact or booking</strong>
-        </div>
-        <div>
-          <Globe2 size={18} />
-          <span>Integration</span>
-          <strong>React component, WordPress block, or embedded widget</strong>
+      <section className="content-section">
+        <div className="section-label centered">Business value</div>
+        <h2>Why companies use it</h2>
+        <div className="business-grid">
+          {BUSINESS_CARDS.map((card) => (
+            <article className="business-card" key={card.title}>
+              <IconBubble icon={card.icon} tone={card.tone} />
+              <h3>{card.title}</h3>
+              <p>{card.detail}</p>
+            </article>
+          ))}
         </div>
       </section>
+
+      <section className="content-section tech-section">
+        <div className="section-label centered">Technology stack</div>
+        <h2>Built with modern technologies</h2>
+        <div className="tech-grid">
+          {TECH_CARDS.map((card) => (
+            <article className="tech-card" key={`${card.title}-${card.detail || ""}`}>
+              <IconBubble icon={card.icon} tone={card.tone} />
+              <span>
+                <strong>{card.title}</strong>
+                {card.detail ? <small>{card.detail}</small> : null}
+              </span>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="content-section use-cases">
+        <div className="section-label centered">Perfect for</div>
+        <h2>Use cases</h2>
+        <div className="use-grid">
+          {USE_CASES.map((card) => (
+            <article className="use-card" key={card.title}>
+              <IconBubble icon={card.icon} tone={card.tone} />
+              <span>
+                <strong>{card.title}</strong>
+                <small>{card.detail}</small>
+              </span>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="final-cta">
+        <span className="cta-orbit">
+          <Globe2 size={54} />
+        </span>
+        <h2>
+          Want something
+          <br />
+          similar? <span>Contact the developer.</span>
+        </h2>
+        <p>If you want a premium interactive globe or a custom WebGL section for your website, send a short brief and let’s discuss the build.</p>
+        <a
+          className="primary-action"
+          href={createMailto(
+            "I want a similar WebGL globe",
+            "Hi, I want something similar to the Global Availability Globe for my website."
+          )}
+        >
+          Contact developer
+          <ArrowRight size={17} />
+        </a>
+      </section>
+
+      <footer className="site-footer">
+        <div>
+          <ProductLogo compact />
+          <p>Interactive. Real-time. Global.</p>
+        </div>
+        <nav aria-label="Footer links">
+          <a href="https://github.com/pavlo-bondarchuk/global-availability-globe" target="_blank" rel="noreferrer">
+            <Code2 size={18} />
+            View on GitHub
+          </a>
+          <a href="#top">
+            <ExternalLink size={18} />
+            Live Demo
+          </a>
+        </nav>
+      </footer>
     </main>
   );
 }
